@@ -80,7 +80,7 @@ class Solver_SS(object):
         - log_nth: log training accuracy and loss every nth iteration
         """
 
-        optim = self.optim(model.parameters(), **self.optim_args)
+        optim = self.optim(model.parameters(), **self.opti4m_args)
         criterion = self.loss_func
         self._reset_histories()
         iter_per_epoch = len(train_loader)
