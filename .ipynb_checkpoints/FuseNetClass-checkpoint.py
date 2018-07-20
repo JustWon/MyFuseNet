@@ -238,7 +238,7 @@ class FuseNet(nn.Module):
         ########  DEPTH ENCODER  ########
 
         # Stage 1
-        # print(depth_inputs.shape)
+        print(depth_inputs.shape)
         x = self.conv11d(depth_inputs)
         x_1 = self.CBR1_D(x)
         x, id1_d = F.max_pool2d(x_1, kernel_size=2, stride=2, return_indices=True)

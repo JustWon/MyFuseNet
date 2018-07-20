@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 import torchvision
+from torchvision import models
 from collections import OrderedDict
 import os
 import math
@@ -28,7 +29,7 @@ class FuseNet(nn.Module):
         ########  DEPTH ENCODER  ########
 
         self.conv11d = nn.Conv2d(1, 64, kernel_size=3, padding=1).cuda(gpu_device)
-        self.conv11d.weight.data = avg 
+        # self.conv11d.weight.data = avg 
 
         self.CBR1_D = nn.Sequential(
             nn.BatchNorm2d(64).cuda(gpu_device),
@@ -316,7 +317,8 @@ def CrossEntropy2d():
 
         loss = F.cross_entropy(inputs, targets, weight=weight, size_average=False)
         if pixel_average:
-            loss /= targets_mask.data.sum()
+            sum = targets_mask.data.sum().float()
+            loss /= sum
         return loss
     return wrap
 
