@@ -1,8 +1,13 @@
 # Research repository for Semantic segmentation research group in VCLab
 
 # Todo
+<<<<<<< HEAD
 - [ ] Dataloader construction for SUNRGBD, NYUDv2 from raw images 
 - [ ] Papers review
+=======
+[] Dataloader construction for SUNRGBD, NYUDv2 from raw images
+[] Papers review
+>>>>>>> 0ee062e617a151f553e13b23c87b8bbe0fac8c4b
 
 
 # FuseNet
