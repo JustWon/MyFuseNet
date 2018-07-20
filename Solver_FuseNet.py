@@ -9,7 +9,7 @@ import torch.optim
 
 from time import time
 
-gpu_device = 0
+gpu_device = 1
 torch.cuda.set_device(gpu_device)
 print('[PROGRESS] Chosen GPU Device: ' + str(torch.cuda.current_device()))
 
@@ -34,9 +34,9 @@ class Solver_SS(object):
 
     def save_checkpoint(self, state, is_best, dset_type='NYU'):
         if dset_type == 'NYU':
-            filename = 'models/nyu/'
+            filename = '../models/nyu/'
         elif dset_type == 'SUN':
-            filename = 'models/sun/' 
+            filename = '../models/sun/' 
         else: 
             print ("[ERROR] Please correct dset_type. You can choose either SUN or NYU.")
         cp_filename = filename + 'checkpoint25.pth.tar'
@@ -80,7 +80,7 @@ class Solver_SS(object):
         - log_nth: log training accuracy and loss every nth iteration
         """
 
-        optim = self.optim(model.parameters(), **self.opti4m_args)
+        optim = self.optim(model.parameters(), **self.optim_args)
         criterion = self.loss_func
         self._reset_histories()
         iter_per_epoch = len(train_loader)

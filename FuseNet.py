@@ -14,7 +14,6 @@ torch.cuda.set_device(gpu_device)
 class FuseNet(nn.Module):
     def __init__(self, num_labels):
         super(FuseNet, self).__init__()
-
         
         batchNorm_momentum = 0.1
         feats = list(models.vgg16(pretrained=True).features.children())
