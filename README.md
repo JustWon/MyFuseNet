@@ -1,8 +1,7 @@
 # Research repository for Semantic segmentation research group in VCLab
 
 # Todo
-- [x] Dataloader construction for SUNRGBD, NYUDv2 from raw images 
-- [ ] Papers review
+- check [the trello board](https://trello.com/b/LWmGOprs/semseg-study)
 
 # FuseNet
 

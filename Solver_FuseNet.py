@@ -9,6 +9,9 @@ import torch.optim
 
 from time import time
 
+gpu_device = 0
+torch.cuda.set_device(gpu_device)
+
 class Solver_SS(object):
     default_sgd_args = {"lr": 1e-3,
                         "momentum": 0.9,
