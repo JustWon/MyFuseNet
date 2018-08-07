@@ -12,12 +12,12 @@ class DataVisualizer:
         self.n_classes = 14
         self.all_images = []
 
-    def visualize_all(self, color, depth, label, result):
+    def visualize_all(self, color, depth, label, result, unnormalized_color=True, unnormalized_depth=True):
         self.all_images = []
-        self.visualize_color_image_from_dataloader(color)
-        self.visualize_depth_image_from_dataloader(depth)
+        self.visualize_color_image_from_dataloader(color,unnormalized_color)
+        self.visualize_depth_image_from_dataloader(depth,unnormalized_depth)
         self.visualize_label_image_from_dataloader(label)
-        self.visualize_label_image_from_dataloader(result)
+        self.visualize_infered_label_image_from_dataloader(result)
         
         total_images = np.hstack(self.all_images)
         total_images = Image.fromarray(np.uint8(total_images))
@@ -42,7 +42,7 @@ class DataVisualizer:
         depth_img = np.asarray(depth_img)
         depth_img = np.transpose(depth_img, [1,2,0])
         if unnormalized == True:
-            depth_img = np.uint8(depth_img[:,:,0]*255)
+            depth_img = np.uint8(depth_img[:,:,0])
         else: 
             depth_img = np.uint8(depth_img[:,:,0]/5000*255)
             
@@ -61,7 +61,7 @@ class DataVisualizer:
 
         dtype = 'float32' if normalized else 'uint8'
         cmap = np.zeros((N, 3), dtype=dtype)
-        for i in range(N):
+        for i in range(1, N):
             r = g = b = 0
             c = i
             for j in range(8):
@@ -93,6 +93,14 @@ class DataVisualizer:
     def visualize_label_image_from_dataloader(self, label_img):
         label_img = np.asarray(label_img)
         color_labeld_img = self.decode_segmap(label_img)
+        color_labeld_img = np.uint8(color_labeld_img)
+        self.all_images.append(color_labeld_img)
+        color_labeld_img = Image.fromarray(color_labeld_img)
+        plt.imshow(color_labeld_img)
+
+    def visualize_infered_label_image_from_dataloader(self, inffered_label_img):
+        inffered_label_img = np.asarray(inffered_label_img) # + 1 # why?
+        color_labeld_img = self.decode_segmap(inffered_label_img)
         color_labeld_img = np.uint8(color_labeld_img)
         self.all_images.append(color_labeld_img)
         color_labeld_img = Image.fromarray(color_labeld_img)

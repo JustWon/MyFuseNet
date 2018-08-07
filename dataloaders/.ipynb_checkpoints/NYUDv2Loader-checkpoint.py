@@ -16,16 +16,16 @@ def recursive_glob(rootdir='.', suffix=''):
         for filename in filenames if filename.endswith(suffix)]
 
 class NYUDv2Loader(data.Dataset):
-    def __init__(self, gpu_device, root, split="training", is_transform=False, img_size=(480, 640), img_norm=False):
+    def __init__(self, root, split="training", is_transform=False, img_size=(480, 640), img_norm=False):
         self.root = root
         self.is_transform = is_transform
-        self.n_classes = 13
+        self.n_classes = 14
         self.img_norm = img_norm
         self.img_size = img_size if isinstance(img_size, tuple) else (img_size, img_size)
-        self.color_mean = np.array([98.185719100000,103.121196790000,121.170917550000]) # BGR
+        self.color_mean = np.array([104.00699, 116.66877, 122.67892])
         self.depth_mean = 0
         self.color_max = 255
-        self.depth_max = 2739.73168995
+        self.depth_max = 5000
         self.color_files = collections.defaultdict(list)
         self.depth_files = collections.defaultdict(list)
         self.label_files = collections.defaultdict(list)
@@ -45,9 +45,6 @@ class NYUDv2Loader(data.Dataset):
         for split in ["train", "test"]:
             file_list =  sorted(recursive_glob(rootdir=self.root + split +'/label/', suffix='png'))
             self.label_files[split] = file_list
-
-        self.gpu_device = gpu_device
-        torch.cuda.set_device(self.gpu_device)
 
 
     def __len__(self):
