@@ -63,12 +63,12 @@ class SUNRGBDLoader(data.Dataset):
         label_img = Image.open(label_path)    
 
         if self.is_transform:
-            color_img, depth_img, label_img = self.transform(color_img, depth_img, label_img, label_path)
+            color_img, depth_img, label_img = self.transform(color_img, depth_img, label_img)
         
         return np.asarray(color_img), np.asarray(depth_img), np.asarray(label_img)
 
 
-    def transform(self, color_img, depth_img, label_img, label_path):
+    def transform(self, color_img, depth_img, label_img):
         color_img = color_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
         color_img = np.asarray(color_img)
         color_img = color_img[:, :, ::-1] # RGB -> BGR
@@ -89,10 +89,8 @@ class SUNRGBDLoader(data.Dataset):
         classes = np.unique(label_img)
         label_img = label_img.resize((self.img_size[1], self.img_size[0]), Image.NEAREST)
         label_img = np.asarray(label_img)
-        # label_img = label_img[np.newaxis,:]
-        # assert(np.all(classes == np.unique(label_img)))
-        if (not np.all(classes == np.unique(label_img))):
-            print(label_path)
+        label_img = label_img + 1                           # this is necessary for SUNRGBD
+        # assert(np.all(classes == np.unique(label_img)))   # this is not necessary for SUNRGBD
 
         color_img = torch.from_numpy(color_img).float()
         depth_img = torch.from_numpy(depth_img).float()

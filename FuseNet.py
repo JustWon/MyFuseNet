@@ -309,10 +309,10 @@ def CrossEntropy2d():
         #print("was here: NYU weight")
 
         inputs = inputs.transpose(1, 2).transpose(2, 3).contiguous()
-        inputs = inputs[targets.view(n, h, w, 1).repeat(1, 1, 1, c) >= 0].view(-1, c)
+        inputs = inputs[targets.view(n, h, w, 1).repeat(1, 1, 1, c) > 0].view(-1, c)
 
-        targets_mask = targets >= 0
-        targets = targets[targets_mask] # - 1
+        targets_mask = targets > 0
+        targets = targets[targets_mask] - 1
         
         # print()
         # print(inputs.cpu().detach().numpy().shape)

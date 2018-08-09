@@ -90,7 +90,6 @@ class NYUDv2Loader(data.Dataset):
         classes = np.unique(label_img)
         label_img = label_img.resize((self.img_size[1], self.img_size[0]), Image.NEAREST)
         label_img = np.asarray(label_img)
-        # label_img = label_img[np.newaxis,:]
         assert(np.all(classes == np.unique(label_img)))
 
         color_img = torch.from_numpy(color_img).float()
