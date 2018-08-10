@@ -8,6 +8,8 @@ from collections import OrderedDict
 import os
 import math
 
+import numpy as np
+
 class FuseNet(nn.Module):
     def __init__(self, gpu_device, num_labels):
         super(FuseNet, self).__init__()
@@ -313,12 +315,6 @@ def CrossEntropy2d():
 
         targets_mask = targets > 0
         targets = targets[targets_mask] - 1
-        
-        # print()
-        # print(inputs.cpu().detach().numpy().shape)
-        # print(targets.cpu().detach().numpy().shape)
-        # if (inputs.cpu().detach().numpy().shape == 0 and targets.cpu().detach().numpy().shape == 0):
-        #     return 0 
 
         loss = F.cross_entropy(inputs, targets, weight=weight, size_average=False)
         if pixel_average:
