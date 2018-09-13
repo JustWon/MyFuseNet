@@ -2,8 +2,9 @@ import os
 import collections
 import torch
 import numpy as np
-import scipy.misc as m
 from torch.utils import data
+from torch.autograd import Variable
+from PIL import Image
 
 def recursive_glob(rootdir='.', suffix=''):
     """Performs recursive glob with given suffix and rootdir 
@@ -15,14 +16,16 @@ def recursive_glob(rootdir='.', suffix=''):
         for filename in filenames if filename.endswith(suffix)]
 
 class NYUDv2Loader_HHA(data.Dataset):
-    def __init__(self, root, split="training", is_transform=False, img_size=(480, 640), img_norm=True):
+    def __init__(self, gpu_device, root, split="training", is_transform=False, img_size=(480, 640), img_norm=True):
         self.root = root
         self.is_transform = is_transform
-        self.n_classes = 14
+        self.n_classes = 13
         self.img_norm = img_norm
         self.img_size = img_size if isinstance(img_size, tuple) else (img_size, img_size)
-        self.mean = np.array([104.00699, 116.66877, 122.67892])
+        self.color_mean = np.array([98.185719100000,103.121196790000,121.170917550000]) # BGR
         self.depth_mean = 0
+        self.color_max = 255
+        self.depth_max = 2739.73168995
         self.color_files = collections.defaultdict(list)
         self.depth_files = collections.defaultdict(list)
         self.label_files = collections.defaultdict(list)
@@ -42,6 +45,9 @@ class NYUDv2Loader_HHA(data.Dataset):
         for split in ["train", "test"]:
             file_list =  sorted(recursive_glob(rootdir=self.root + split +'/label/', suffix='png'))
             self.label_files[split] = file_list
+        
+        self.gpu_device = gpu_device
+        torch.cuda.set_device(self.gpu_device)
 
 
     def __len__(self):
@@ -53,54 +59,45 @@ class NYUDv2Loader_HHA(data.Dataset):
         depth_path = self.depth_files[self.split][index].rstrip()
         label_path = self.label_files[self.split][index].rstrip()
 
-        color_img = m.imread(color_path)    
-        color_img = np.array(color_img, dtype=np.uint8)
-
-        depth_img = m.imread(depth_path)    
-        depth_img = np.array(depth_img)
-        
-        label_img = m.imread(label_path)    
-        label_img = np.array(label_img, dtype=np.uint8)
+        color_img = Image.open(color_path)    
+        depth_img = Image.open(depth_path)    
+        label_img = Image.open(label_path)    
         
         if self.is_transform:
             color_img, depth_img, label_img = self.transform(color_img, depth_img, label_img)
         
-        return color_img, depth_img, label_img
+        return np.asarray(color_img), np.asarray(depth_img), np.asarray(label_img)
 
 
-    def transform(self, img, depth_img, lbl):
-        img = m.imresize(img, (self.img_size[0], self.img_size[1])) # uint8 with RGB mode
-        img = img[:, :, ::-1] # RGB -> BGR
-        img = img.astype(np.float64)
-        img -= self.mean
+    def transform(self, color_img, depth_img, label_img):
+        color_img = color_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
+        color_img = np.asarray(color_img)
+        color_img = color_img[:, :, ::-1] # RGB -> BGR
+        color_img = color_img.astype(np.float64)
         if self.img_norm:
-            # Resize scales images from 0 to 255, thus we need
-            # to divide by 255.0
-            img = img.astype(float) / 255.0
-        # NHWC -> NCHW
-        img = img.transpose(2, 0, 1)
-        
-        depth_img = m.imresize(depth_img, (self.img_size[0], self.img_size[1]))
+            color_img -= self.color_mean
+            color_img = color_img.astype(float) / self.color_max
+        color_img = color_img.transpose(2, 0, 1)        # NHWC -> NCHW
+
+        depth_img = depth_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
+        depth_img = np.asarray(depth_img)
         depth_img = depth_img.astype(np.float64)
-        depth_img -= self.depth_mean
-        if self.img_norm:
-            # Resize scales images from 0 to 255, thus we need
-            # to divide by 255.0
-            depth_img = depth_img.astype(float) / 255.0
-        depth_img = depth_img.transpose(2, 0, 1)
-        
+        # TODO: HHA representation
+        # if self.img_norm:
+            # depth_img -= self.depth_mean  
+            # depth_img = depth_img.astype(float) / self.depth_max
+        depth_img = depth_img.transpose(2, 0, 1)        # NHWC -> NCHW
 
-        classes = np.unique(lbl)
-        lbl = lbl.astype(float)
-        lbl = m.imresize(lbl, (self.img_size[0], self.img_size[1]), 'nearest', mode='F')
-        lbl = lbl[np.newaxis,:]
-        lbl = lbl.astype(int)
-        assert(np.all(classes == np.unique(lbl)))
+        classes = np.unique(label_img)
+        label_img = label_img.resize((self.img_size[1], self.img_size[0]), Image.NEAREST)
+        label_img = np.asarray(label_img)
+        assert(np.all(classes == np.unique(label_img)))
 
-        img = torch.from_numpy(img).float()
+        color_img = torch.from_numpy(color_img).float()
         depth_img = torch.from_numpy(depth_img).float()
-        lbl = torch.from_numpy(lbl).long()
-        return img, depth_img, lbl
+        label_img = torch.from_numpy(label_img).long()
+
+        return color_img, depth_img, label_img
 
 
     def color_map(self, N=256, normalized=False):

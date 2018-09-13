@@ -37,7 +37,7 @@ def get_data(dtype=np.float32, dset_type='NYU'):
     """
     # Load the chosen data path
     if dset_type == 'SUN': 
-        path = '/usr/stud/soenmeza/Desktop/FuseNet/data/h5_files/sunrgbd1_db.h5'
+        path = '/home/dongwonshin/Desktop/Datasets/SUNRGBD/sunrgbd_class_10_db.h5'
     elif dset_type == 'NYU':
         path = '/home/dongwonshin/Desktop/Datasets/NYUDv2/nyu_class_10_db.h5'
     else:

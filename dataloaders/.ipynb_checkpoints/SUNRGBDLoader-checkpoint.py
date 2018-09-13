@@ -15,11 +15,11 @@ def recursive_glob(rootdir='.', suffix=''):
         for looproot, _, filenames in os.walk(rootdir)
         for filename in filenames if filename.endswith(suffix)]
 
-class SUNRGBDLoader_HHA(data.Dataset):
+class SUNRGBDLoader(data.Dataset):
     def __init__(self, gpu_device, root, split="training", is_transform=False, img_size=(480, 640), img_norm=False):
         self.root = root
         self.is_transform = is_transform
-        self.n_classes = 38
+        self.n_classes = 40
         self.img_norm = img_norm
         self.img_size = img_size if isinstance(img_size, tuple) else (img_size, img_size)
         self.color_mean = np.array([112.007252660000,119.003318390000,126.016936230000]) # BGR
@@ -39,7 +39,7 @@ class SUNRGBDLoader_HHA(data.Dataset):
             self.color_files[split] = file_list
         
         for split in ["train", "test"]:
-            file_list =  sorted(recursive_glob(rootdir=self.root + split +'/HHA/', suffix='png'))
+            file_list =  sorted(recursive_glob(rootdir=self.root + split +'/depth/', suffix='png'))
             self.depth_files[split] = file_list    
         
         for split in ["train", "test"]:
@@ -81,11 +81,10 @@ class SUNRGBDLoader_HHA(data.Dataset):
         depth_img = depth_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
         depth_img = np.asarray(depth_img)
         depth_img = depth_img.astype(np.float64)
-        # TODO: HHA representation
-        # if self.img_norm:
-        #     depth_img -= self.depth_mean
-        #     depth_img = depth_img.astype(float) / self.depth_max
-        depth_img = depth_img.transpose(2, 0, 1)        # NHWC -> NCHW
+        depth_img = depth_img[np.newaxis,:]
+        if self.img_norm:
+            depth_img -= self.depth_mean
+            depth_img = depth_img.astype(float) / self.depth_max
         
         classes = np.unique(label_img)
         label_img = label_img.resize((self.img_size[1], self.img_size[0]), Image.NEAREST)

@@ -19,7 +19,7 @@ class Solver_SS(object):
                          "eps": 1e-8,
                          "weight_decay": 0.0}
 
-    def __init__(self, gpu_device=0, optim=torch.optim.SGD, optim_args={},
+    def __init__(self, gpu_device=0, is_HHA=False, optim=torch.optim.SGD, optim_args={},
                  loss_func=torch.nn.CrossEntropyLoss):
         optim_args_merged = self.default_sgd_args.copy()
         optim_args_merged.update(optim_args)
@@ -31,11 +31,19 @@ class Solver_SS(object):
         self.gpu_device = gpu_device
         torch.cuda.set_device(self.gpu_device)
 
+        self.is_HHA = is_HHA
+
     def save_checkpoint(self, state, is_best, dset_type='NYU'):
         if dset_type == 'NYU':
-            filename = '../models/nyu/'
+            if (not self.is_HHA):
+                filename = '../models/nyu/'
+            else:
+                filename = '../models/nyu_hha/'
         elif dset_type == 'SUN':
-            filename = '../models/sun/' 
+            if (not self.is_HHA):
+                filename = '../models/sun/' 
+            else:
+                filename = '../models/sun_hha/'
         else: 
             print ("[ERROR] Please correct dset_type. You can choose either SUN or NYU.")
         cp_filename = filename + 'checkpoint25.pth.tar'
@@ -89,9 +97,9 @@ class Solver_SS(object):
         if resume:
             print("[PROGRESS] Selected Training Mode: RESUME")
             if dset_type == 'NYU':
-                model_path = '/remwork/atcremers72/soenmeza/FuseNet/models/nyu/checkpoint12.pth.tar'
+                model_path = '../models/nyu/checkpoint25.pth.tar'
             elif dset_type == 'SUN':
-                model_path = '/remwork/atcremers72/soenmeza/FuseNet/models/sun/checkpoint12.pth.tar'
+                model_path = '../models/sun/checkpoint25.pth.tar'
             if os.path.isfile(model_path):
                 print("[PROGRESS] Loading checkpoint: '{}'".format(model_path))
                 checkpoint = torch.load(model_path)

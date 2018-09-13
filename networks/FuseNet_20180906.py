@@ -10,9 +10,9 @@ import math
 
 import numpy as np
 
-class FuseNet(nn.Module):
+class FuseNet_20180906(nn.Module):
     def __init__(self, gpu_device, num_labels, is_HHA=False):
-        super(FuseNet, self).__init__()
+        super(FuseNet_20180906, self).__init__()
         
         self.gpu_device = gpu_device
         torch.cuda.set_device(self.gpu_device)
@@ -238,23 +238,27 @@ class FuseNet(nn.Module):
 
         # Stage 1
         y = self.CBR1_RGB(rgb_inputs)
-        y = torch.add(y,x_1)
+        y_1 = torch.add(y,x_1)
+        y = y_1
         y, id1 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 
         # Stage 2
         y = self.CBR2_RGB(y)
-        y = torch.add(y,x_2)
+        y_2 = torch.add(y,x_2)
+        y = y_2
         y, id2 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 
         # Stage 3
         y = self.CBR3_RGB(y)
-        y = torch.add(y,x_3)
+        y_3 = torch.add(y,x_3)
+        y = y_3
         y, id3 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
         y = self.dropout3(y)
 
         # Stage 4
         y = self.CBR4_RGB(y)
-        y = torch.add(y,x_4)
+        y_4 = torch.add(y,x_4)
+        y = y_4
         y, id4 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
         y = self.dropout4(y)
 
@@ -274,18 +278,22 @@ class FuseNet(nn.Module):
 
         # Stage 4 dec
         y = F.max_unpool2d(y, id4, kernel_size=2, stride=2)
+        y = torch.add(y,y_4)
         y = self.CBR4_Dec(y)
 
         # Stage 3 dec
         y = F.max_unpool2d(y, id3, kernel_size=2, stride=2)
+        y = torch.add(y,y_3)
         y = self.CBR3_Dec(y)
 
         # Stage 2 dec
         y = F.max_unpool2d(y, id2, kernel_size=2, stride=2)
+        y = torch.add(y,y_2)
         y = self.CBR2_Dec(y)
 
         # Stage 1 dec
         y = F.max_unpool2d(y, id1, kernel_size=2, stride=2)
+        y = torch.add(y,y_1)
         y = self.CBR1_Dec(y)
 
         return y

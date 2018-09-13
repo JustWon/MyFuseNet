@@ -19,7 +19,7 @@ class SUNRGBDLoader(data.Dataset):
     def __init__(self, gpu_device, root, split="training", is_transform=False, img_size=(480, 640), img_norm=False):
         self.root = root
         self.is_transform = is_transform
-        self.n_classes = 40
+        self.n_classes = 38
         self.img_norm = img_norm
         self.img_size = img_size if isinstance(img_size, tuple) else (img_size, img_size)
         self.color_mean = np.array([112.007252660000,119.003318390000,126.016936230000]) # BGR
