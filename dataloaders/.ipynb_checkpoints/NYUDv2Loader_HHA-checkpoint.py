@@ -15,19 +15,19 @@ def recursive_glob(rootdir='.', suffix=''):
         for looproot, _, filenames in os.walk(rootdir)
         for filename in filenames if filename.endswith(suffix)]
 
-class SUNRGBDLoader_HHA(data.Dataset):
-    def __init__(self, gpu_device, root, split="training", is_transform=False, img_size=(480, 640), img_norm=False):
+class NYUDv2Loader_HHA(data.Dataset):
+    def __init__(self, gpu_device, root, split="training", is_transform=False, img_size=(480, 640), img_norm=True):
         self.root = root
         self.is_transform = is_transform
-        self.n_classes = 38
+        self.n_classes = 13
         self.img_norm = img_norm
         self.img_size = img_size if isinstance(img_size, tuple) else (img_size, img_size)
-        self.color_mean = np.array([112.007252660000,119.003318390000,126.016936230000]) # BGR
-        self.hha_mean = np.array([20.267168620000, 33.470467980000, 103.986641670000 ])
+        self.color_mean = np.array([98.185719100000,103.121196790000,121.170917550000]) # BGR
+        self.depth_mean = np.array([136.302856510000, 15.202850390000, 110.708918420000 ])
         self.color_max = 255
-        self.hha_max = 255
+        self.depth_max = 255
         self.color_files = collections.defaultdict(list)
-        self.hha_files = collections.defaultdict(list)
+        self.depth_files = collections.defaultdict(list)
         self.label_files = collections.defaultdict(list)
         self.cmap = self.color_map(normalized=False)
 
@@ -35,19 +35,20 @@ class SUNRGBDLoader_HHA(data.Dataset):
         self.split = split_map[split]
 
         for split in ["train", "test"]:
-            file_list =  sorted(recursive_glob(rootdir=self.root + split +'/color/', suffix='jpg'))
+            file_list =  sorted(recursive_glob(rootdir=self.root + split +'/color/', suffix='png'))
             self.color_files[split] = file_list
         
         for split in ["train", "test"]:
             file_list =  sorted(recursive_glob(rootdir=self.root + split +'/HHA/', suffix='png'))
-            self.hha_files[split] = file_list    
+            self.depth_files[split] = file_list    
         
         for split in ["train", "test"]:
             file_list =  sorted(recursive_glob(rootdir=self.root + split +'/label/', suffix='png'))
             self.label_files[split] = file_list
-
+        
         self.gpu_device = gpu_device
         torch.cuda.set_device(self.gpu_device)
+
 
     def __len__(self):
         return len(self.color_files[self.split])
@@ -55,20 +56,20 @@ class SUNRGBDLoader_HHA(data.Dataset):
 
     def __getitem__(self, index):
         color_path = self.color_files[self.split][index].rstrip()
-        hha_path = self.hha_files[self.split][index].rstrip()
+        depth_path = self.depth_files[self.split][index].rstrip()
         label_path = self.label_files[self.split][index].rstrip()
 
         color_img = Image.open(color_path)    
-        hha_img = Image.open(hha_path)    
+        depth_img = Image.open(depth_path)    
         label_img = Image.open(label_path)    
-
-        if self.is_transform:
-            color_img, hha_img, label_img = self.transform(color_img, hha_img, label_img)
         
-        return np.asarray(color_img), np.asarray(hha_img), np.asarray(label_img)
+        if self.is_transform:
+            color_img, depth_img, label_img = self.transform(color_img, depth_img, label_img)
+        
+        return np.asarray(color_img), np.asarray(depth_img), np.asarray(label_img)
 
 
-    def transform(self, color_img, hha_img, label_img):
+    def transform(self, color_img, depth_img, label_img):
         color_img = color_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
         color_img = np.asarray(color_img)
         color_img = color_img[:, :, ::-1] # RGB -> BGR
@@ -78,25 +79,25 @@ class SUNRGBDLoader_HHA(data.Dataset):
             color_img = color_img.astype(float) / self.color_max
         color_img = color_img.transpose(2, 0, 1)        # NHWC -> NCHW
 
-        hha_img = hha_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
-        hha_img = np.asarray(hha_img)
-        hha_img = hha_img.astype(np.float64)
-        if self.img_norm:
-            hha_img -= self.hha_mean
-            hha_img = hha_img.astype(float) / self.hha_max
-        hha_img = hha_img.transpose(2, 0, 1)        # NHWC -> NCHW
-        
+        depth_img = depth_img.resize((self.img_size[1], self.img_size[0]), Image.ANTIALIAS)
+        depth_img = np.asarray(depth_img)
+        depth_img = depth_img.astype(np.float64)
+        # TODO: HHA representation
+        # if self.img_norm:
+            # depth_img -= self.depth_mean  
+            # depth_img = depth_img.astype(float) / self.depth_max
+        depth_img = depth_img.transpose(2, 0, 1)        # NHWC -> NCHW
+
         classes = np.unique(label_img)
         label_img = label_img.resize((self.img_size[1], self.img_size[0]), Image.NEAREST)
         label_img = np.asarray(label_img)
-        label_img = label_img + 1                           # this is necessary for SUNRGBD
-        # assert(np.all(classes == np.unique(label_img)))   # this is not necessary for SUNRGBD
+        assert(np.all(classes == np.unique(label_img)))
 
         color_img = torch.from_numpy(color_img).float()
-        hha_img = torch.from_numpy(hha_img).float()
+        depth_img = torch.from_numpy(depth_img).float()
         label_img = torch.from_numpy(label_img).long()
-        
-        return color_img, hha_img, label_img
+
+        return color_img, depth_img, label_img
 
 
     def color_map(self, N=256, normalized=False):

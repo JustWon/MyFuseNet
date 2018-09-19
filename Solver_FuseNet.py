@@ -97,9 +97,16 @@ class Solver_SS(object):
         if resume:
             print("[PROGRESS] Selected Training Mode: RESUME")
             if dset_type == 'NYU':
-                model_path = '../models/nyu/checkpoint25.pth.tar'
+                if (not self.is_HHA):
+                    model_path = '../models/nyu/checkpoint25.pth.tar'
+                else:
+                    model_path = '../models/nyu_hha/checkpoint25.pth.tar'
             elif dset_type == 'SUN':
-                model_path = '../models/sun/checkpoint25.pth.tar'
+                if (not self.is_HHA):
+                    model_path = '../models/sun/checkpoint25.pth.tar' 
+                else:
+                    model_path = '../models/sun_hha/checkpoint25.pth.tar'
+
             if os.path.isfile(model_path):
                 print("[PROGRESS] Loading checkpoint: '{}'".format(model_path))
                 checkpoint = torch.load(model_path)
